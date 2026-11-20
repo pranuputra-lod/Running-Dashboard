@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Running Dashboard</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: sidebar nav + one working view; summary first, detail in tabs. Track-blue accent, zone colors are data only. */
+:root{
+  --bg:#EEF1F4;--surface:#FFFFFF;--surface2:#E7EBF0;--fg:#131C26;--muted:#5A6877;--line:#D3DAE2;
+  --accent:#2447C9;--accent-fg:#FFFFFF;--accent-soft:#E3E9FB;
+  --good:#1E8E5A;--warn:#B7791F;--bad:#C0392B;
+  --z1:#7C93A8;--z2:#2F9E6B;--z3:#D9A21B;--z4:#E8772A;--z5:#D23B3B;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;--f-body:"Barlow","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E141B;--surface:#151D27;--surface2:#1D2834;--fg:#E6ECF2;--muted:#92A0AF;--line:#27333F;
+  --accent:#7C9BFF;--accent-fg:#0B1220;--accent-soft:#1B2745;
+  --good:#4CC38A;--warn:#E3B04B;--bad:#EF6B5C;
+  --z1:#8FA6BB;--z2:#46B883;--z3:#E6B635;--z4:#F08A42;--z5:#EE5959;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E141B;--surface:#151D27;--surface2:#1D2834;--fg:#E6ECF2;--muted:#92A0AF;--line:#27333F;
+  --accent:#7C9BFF;--accent-fg:#0B1220;--accent-soft:#1B2745;
+  --good:#4CC38A;--warn:#E3B04B;--bad:#EF6B5C;
+  --z1:#8FA6BB;--z2:#46B883;--z3:#E6B635;--z4:#F08A42;--z5:#EE5959;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);padding-block:20px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:.01em;margin:0;text-wrap:balance;line-height:1.1}
+h2{font-size:30px}h3{font-size:19px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+p{margin:0}
+.app{display:grid;grid-template-columns:190px minmax(0,1fr);gap:28px;max-width:1160px;margin:0 auto}
+aside{display:flex;flex-direction:column;gap:18px;align-self:start}
+.brand{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1;letter-spacing:.04em;text-transform:uppercase}
+.brand small{display:block;font:500 12px var(--f-body);letter-spacing:.08em;color:var(--muted);margin-top:6px}
+nav{display:flex;flex-direction:column;gap:2px}
+nav a{color:var(--fg);text-decoration:none;padding:8px 10px;border-radius:6px;font-weight:500;border-left:3px solid transparent}
+nav a:hover{background:var(--surface2)}
+nav a[aria-current="page"]{background:var(--accent-soft);border-left-color:var(--accent);font-weight:600}
+.sync{font-size:12px;color:var(--muted)}
+main{display:flex;flex-direction:column;gap:20px;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+.head p{color:var(--muted);max-width:60ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.grid2{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.stat .n{font:700 44px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.stat .n small{font-size:18px;color:var(--muted);font-weight:600;margin-left:4px}
+.stat .l{font-size:13px;color:var(--muted)}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500;min-width:0}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:70px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn{font:600 14px var(--f-body);background:var(--accent);color:var(--accent-fg);border:0;border-radius:6px;padding:9px 14px;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.sm{padding:5px 9px;font-size:13px}
+.btn.del{background:transparent;color:var(--bad);border:1px solid var(--line);padding:5px 9px;font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.row>*{flex:1 1 130px}
+.row>.btn{flex:0 0 auto}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th{font:600 12px var(--f-body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:6px 8px 6px 0;white-space:nowrap}
+td{padding:6px 8px 6px 0;border-top:1px solid var(--line);vertical-align:middle}
+td input,td select{padding:6px 8px;min-width:70px}
+.num{font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font:600 12px var(--f-body);padding:2px 8px;border-radius:99px;background:var(--surface2);color:var(--fg)}
+.chip.a{background:var(--accent);color:var(--accent-fg)}
+.zrow{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.zrow:first-child{border-top:0}
+.zbadge{font:700 20px var(--f-display);color:#fff;text-align:center;border-radius:5px;padding:3px 0}
+.zbar{display:flex;height:12px;border-radius:3px;overflow:hidden;gap:2px}
+.zbar i{display:block;height:100%}
+.zhr{font:700 22px var(--f-display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:150px}
+.col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;min-width:0}
+.bars{position:relative;width:100%;flex:1;display:flex;align-items:end;gap:3px;justify-content:center}
+.bars i{display:block;width:42%;border-radius:3px 3px 0 0;min-height:2px}
+.bars .plan{background:var(--surface2);border:1px solid var(--line)}
+.bars .done{background:var(--accent)}
+.col span{font-size:12px;color:var(--muted)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.tl{display:flex;gap:4px;align-items:end;height:130px}
+.seg{border-radius:4px 4px 0 0;background:var(--surface2);border:1px solid var(--line);padding:6px 8px;font-size:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+.seg b{font:700 15px var(--f-display);text-transform:uppercase}
+.seg.now{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.fb{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:12px;font-size:14px}
+.log{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.log:first-child{border-top:0;padding-top:0}
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:600}
+.note{font-size:13px;color:var(--muted)}
+.empty{padding:22px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);text-align:center}
+.dim{opacity:.55}
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr);gap:16px}
+  nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
+  nav a{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;border-radius:6px 6px 0 0}
+  nav a[aria-current="page"]{border-bottom-color:var(--accent)}
+  .stat .n{font-size:38px}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:filter .15s}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">Running<br>Dashboard<small id="who">Program lari pribadi</small></div>
+    <nav id="nav" aria-label="Menu utama"></nav>
+    <div class="sync" id="sync">Memuat data…</div>
+  </aside>
+  <main id="view"></main>
+</div>
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const DAYS=["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+const TYPES=["Istirahat","Easy run","Long run","Tempo","Interval","Recovery","Cross training"];
+const ZOPTS=["-","Z1","Z2","Z1-Z2","Z3","Z3-Z4","Z4","Z4-Z5","Z5"];
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const today=()=>iso(new Date());
+const parseD=s=>new Date(s+"T00:00:00");
+const daysBetween=(a,b)=>Math.round((parseD(b)-parseD(a))/864e5);
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return iso(d)};
+const mondayOf=s=>{const d=parseD(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)};
+const fmtDate=s=>s?parseD(s).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"}):"-";
+const dayIdx=s=>(parseD(s).getDay()+6)%7;
+
+/* ---------- Data awal (contoh, bisa diubah) ---------- */
+const DEF_MAIN=()=>({
+  profile:{name:"",age:30,weight:65,hrmax:"",hrrest:60,method:"hrr"},
+  plan:[
+    {type:"Easy run",km:6,zone:"Z2",note:""},
+    {type:"Interval",km:8,zone:"Z4-Z5",note:"6 x 800 m, jogging 400 m"},
+    {type:"Istirahat",km:0,zone:"-",note:""},
+    {type:"Tempo",km:8,zone:"Z3-Z4",note:"20 menit tempo"},
+    {type:"Recovery",km:4,zone:"Z1",note:""},
+    {type:"Long run",km:14,zone:"Z2",note:"Pace santai, bisa ngobrol"},
+    {type:"Istirahat",km:0,zone:"-",note:""}
+  ],
+  blocks:{start:mondayOf(today()),items:[
+    {id:uid(),name:"Base",weeks:6,vol:30,focus:"Bangun volume aerobik"},
+    {id:uid(),name:"Build",weeks:6,vol:40,focus:"Tempo dan threshold"},
+    {id:uid(),name:"Peak",weeks:3,vol:45,focus:"Interval dan simulasi race"},
+    {id:uid(),name:"Taper",weeks:2,vol:25,focus:"Volume turun, intensitas dijaga"}
+  ]},
+  races:[],
+  strength:[
+    {id:uid(),day:1,title:"Kaki dan core",ex:[
+      {id:uid(),name:"Goblet squat",sets:3,reps:"8",load:"sedang"},
+      {id:uid(),name:"Romanian deadlift",sets:3,reps:"8",load:"sedang"},
+      {id:uid(),name:"Split squat",sets:3,reps:"8 / kaki",load:"badan"},
+      {id:uid(),name:"Plank",sets:3,reps:"40 dtk",load:"badan"}]},
+    {id:uid(),day:3,title:"Stabilitas dan glute",ex:[
+      {id:uid(),name:"Glute bridge",sets:3,reps:"12",load:"badan"},
+      {id:uid(),name:"Calf raise",sets:3,reps:"12",load:"badan"},
+      {id:uid(),name:"Side plank",sets:3,reps:"30 dtk / sisi",load:"badan"},
+      {id:uid(),name:"Single-leg balance",sets:2,reps:"45 dtk / kaki",load:"badan"}]}
+  ]
+});
+let M=DEF_MAIN(), L={items:[]};
+
+/* ---------- Penyimpanan: db bila ada, kalau tidak browser ---------- */
+const S={db:null,timers:{},busy:{},dirty:{},loaded:{}};
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem("rd_"+k))}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem("rd_"+k,JSON.stringify(v))}catch(e){}};
+const setSync=t=>{const el=$("#sync");if(el)el.textContent=t};
+const mergeMain=d=>{const b=DEF_MAIN();return Object.assign(b,d,{profile:Object.assign(b.profile,d.profile||{})})};
+function save(key){
+  if(S.db&&!S.loaded[key]){setSync("Data tersimpan belum selesai dimuat, ulangi sebentar lagi");return}
+  if(S.db){clearTimeout(S.timers[key]);S.timers[key]=setTimeout(()=>flush(key),600);setSync("Menyimpan…")}
+  else{lsSet(key,key==="main"?M:L);setSync("Tersimpan di browser ini")}
+}
+async function flush(key){
+  if(S.busy[key]){S.dirty[key]=true;return}
+  S.busy[key]=true;
+  try{await S.db.doc("run/"+key).set(clone(key==="main"?M:L));setSync("Tersimpan")}
+  catch(e){setSync("Gagal menyimpan ("+((e&&e.code)||"error")+")")}
+  S.busy[key]=false;
+  if(S.dirty[key]){S.dirty[key]=false;flush(key)}
+}
+function listen(key){
+  const t=setTimeout(()=>setSync("Data belum terjangkau, mungkin belum terbaru"),10000);
+  S.db.doc("run/"+key).onSnapshot(s=>{
+    if(s.metadata.hasPendingWrites)return;
+    if(!s.metadata.fromCache){clearTimeout(t);S.loaded[key]=true;setSync("Tersimpan")}
+    if(!s.exists)return;
+    const d=clone(s.data());
+    if(JSON.stringify(d)===JSON.stringify(key==="main"?M:L))return;
+    if(key==="main")M=mergeMain(d);else L=Object.assign({items:[]},d);
+    const ae=document.activeElement;
+    if(ae&&$("#view").contains(ae)&&/INPUT|SELECT|TEXTAREA/.test(ae.tagName))updateDerived();else render();
+  },e=>{clearTimeout(t);setSync("Data tidak bisa dibaca ("+((e&&e.code)||"error")+")")});
+}
+
+/* ---------- Zona heart rate ---------- */
+const PCT=[.5,.6,.7,.8,.9,1];
+function hrMax(){
+  const v=Number(M.profile.hrmax);
+  if(v>100&&v<230)return{v:Math.round(v),est:false};
+  return{v:Math.round(208-0.7*(Number(M.profile.age)||30)),est:true};
+}
+function zones(){
+  const max=hrMax().v,rest=Number(M.profile.hrrest)||0;
+  const hrr=M.profile.method==="hrr"&&rest>20&&rest<max-20;
+  const e=PCT.map(p=>Math.round(hrr?rest+p*(max-rest):p*max));
+  return[0,1,2,3,4].map(i=>({n:i+1,lo:i===0?e[0]:e[i]+1,hi:e[i+1]}));
+}
+const ZMETA=[
+  {name:"Pemulihan",rpe:"1-2",talk:"Bisa mengobrol penuh",use:"Pemanasan, pendinginan, dan recovery run. Tujuannya melancarkan darah tanpa menambah beban."},
+  {name:"Aerobik / Easy",rpe:"3-4",talk:"Bisa bicara kalimat utuh",use:"Fondasi latihan. Easy run dan long run membangun kapasitas aerobik, kapiler, dan efisiensi."},
+  {name:"Tempo / Moderate",rpe:"5-6",talk:"Kalimat pendek",use:"Tempo run dan pace maraton. Nyaman tapi mulai terasa kerja."},
+  {name:"Threshold",rpe:"7-8",talk:"Beberapa kata saja",use:"Threshold dan cruise interval. Menaikkan pace yang bisa dipertahankan sebelum laktat menumpuk."},
+  {name:"VO2max / Anaerobik",rpe:"9-10",talk:"Tidak bisa bicara",use:"Interval pendek, strides, dan tes. Kerja berat, durasi singkat, pemulihan cukup."}
+];
+function zoneOfHr(h){
+  h=Number(h);if(!h)return null;const z=zones();
+  if(h<z[0].lo)return 0;
+  for(let i=0;i<5;i++)if(h<=z[i].hi)return i+1;
+  return 5;
+}
+const zlabel=n=>n==null?"-":n===0?"di bawah Z1":"Z"+n;
+
+/* ---------- Turunan jadwal ---------- */
+const planKm=()=>M.plan.reduce((a,d)=>a+(Number(d.km)||0),0);
+const fmtKm=n=>(Math.round(n*10)/10).toString().replace(".",",");
+function paceOf(km,min){km=Number(km);min=Number(min);if(!km||!min)return null;const p=min/km,m=Math.floor(p),s=Math.round((p-m)*60);return s===60?(m+1)+":00":m+":"+pad(s)}
+function weekLogs(){const m=mondayOf(today()),e=addDays(m,6);return L.items.filter(l=>l.date>=m&&l.date<=e)}
+function blockInfo(){
+  const b=M.blocks,start=b.start||today();let acc=0;
+  const w=Math.floor(daysBetween(start,today())/7);
+  const total=b.items.reduce((a,x)=>a+(Number(x.weeks)||0),0);
+  let cur=-1,wk=0;
+  if(w>=0)for(let i=0;i<b.items.length;i++){const n=Number(b.items[i].weeks)||0;if(w<acc+n){cur=i;wk=w-acc+1;break}acc+=n}
+  return{cur,wk,total,start,end:addDays(start,total*7-1),before:w<0,after:w>=total&&total>0};
+}
+const nextRace=()=>M.races.filter(r=>r.date>=today()).sort((a,b)=>a.date<b.date?-1:1)[0];
+
+/* ---------- Router ---------- */
+const V={};
+function render(){
+  const k=location.hash.slice(1);const key=V[k]?k:"ringkasan";
+  $("#nav").innerHTML=["ringkasan","profil","program","block","race","strength","coach","zona"].filter(id=>V[id]).map(id=>'<a href="#'+id+'"'+(id===key?' aria-current="page"':"")+">"+V[id].t+"</a>").join("");
+  $("#view").innerHTML=V[key].f();
+  $("#who").textContent=M.profile.name?M.profile.name:"Program lari pribadi";
+  updateDerived();
+}
+
+/* ---------- Helper tampilan ---------- */
+const inp=(path,val,o={})=>'<input data-bind="'+path+'" '+(o.num?'data-num="1" type="number" inputmode="decimal" step="'+(o.step||1)+'"':'type="'+(o.type||"text")+'"')+' value="'+esc(val)+'"'+(o.ph?' placeholder="'+esc(o.ph)+'"':"")+' aria-label="'+esc(o.label||"")+'">';
+const sel=(path,val,opts,label)=>'<select data-bind="'+path+'" aria-label="'+esc(label||"")+'">'+opts.map(o=>'<option'+(o===val?" selected":"")+">"+esc(o)+"</option>").join("")+"</select>";
+const head=(t,p,extra)=>'<div class="head"><div><h2>'+t+"</h2><p>"+p+"</p></div>"+(extra||"")+"</div>";
+function zoneRows(){
+  return zones().map((x,i)=>'<div class="zrow"><div class="zbadge" style="background:var(--z'+(i+1)+');color:#0F1720">Z'+(i+1)+'</div><div><b>'+ZMETA[i].name+'</b><div class="note">'+ZMETA[i].talk+" · RPE "+ZMETA[i].rpe+'</div></div><div class="zhr">'+x.lo+"–"+x.hi+' <span class="note">bpm</span></div></div>').join("");
+}
+function zoneBar(){
+  const z=zones(),tot=z[4].hi-z[0].lo||1;
+  return '<div class="zbar" role="img" aria-label="Lebar zona heart rate">'+z.map((x,i)=>'<i style="flex:'+(x.hi-x.lo+1)+';background:var(--z'+(i+1)+')"></i>').join("")+"</div>";
+}
+function hrRange(s){
+  const m=/Z(\d)(?:-Z(\d))?/.exec(s||"");if(!m)return"";
+  const z=zones(),a=z[Number(m[1])-1],b=z[Number(m[2]||m[1])-1];
+  return a&&b?a.lo+"–"+b.hi+" bpm":"";
+}
+
+/* ---------- Ringkasan ---------- */
+V.ringkasan={t:"Ringkasan",f:function(){
+  const nr=nextRace(),bi=blockInfo(),done=weekLogs().reduce((a,l)=>a+(Number(l.km)||0),0),plan=planKm();
+  const items=M.blocks.items,cur=bi.cur>=0?items[bi.cur]:null;
+  let blk="Belum ada block",blkSub="Atur di menu Training Block";
+  if(items.length){
+    if(cur){blk=esc(cur.name);blkSub="Minggu "+bi.wk+" dari "+cur.weeks+" · target "+cur.vol+" km/minggu"}
+    else if(bi.before){blk="Belum mulai";blkSub="Mulai "+fmtDate(bi.start)}
+    else{blk="Selesai";blkSub="Block berakhir "+fmtDate(bi.end)}
+  }
+  const wl=weekLogs(),td=dayIdx(today());
+  const dayKm=DAYS.map((d,i)=>wl.filter(l=>dayIdx(l.date)===i).reduce((a,l)=>a+(Number(l.km)||0),0));
+  const mx=Math.max(1,...dayKm,...M.plan.map(d=>Number(d.km)||0));
+  const cols=DAYS.map((d,i)=>'<div class="col"><div class="bars"><i class="plan" style="height:'+((Number(M.plan[i].km)||0)/mx*100)+'%"></i><i class="done" style="height:'+(dayKm[i]/mx*100)+'%"></i></div><span'+(i===td?' style="color:var(--fg);font-weight:600"':"")+">"+d.slice(0,3)+"</span></div>").join("");
+  const last=L.items.slice().sort((a,b)=>a.date<b.date?1:-1).find(l=>l.feedback);
+  return head("Ringkasan","Gambaran minggu ini, block yang berjalan, dan race terdekat.")+
+  '<div class="grid">'+
+  '<div class="card stat"><div class="l">Race berikutnya</div>'+(nr?'<div class="n">'+daysBetween(today(),nr.date)+'<small>hari lagi</small></div><div class="l">'+esc(nr.name)+" · "+esc(nr.dist)+" · "+fmtDate(nr.date)+"</div>":'<div class="n">–</div><div class="l">Belum ada race di kalender</div>')+"</div>"+
+  '<div class="card stat"><div class="l">Training block</div><div class="n" style="font-size:36px">'+blk+'</div><div class="l">'+blkSub+"</div></div>"+
+  '<div class="card stat"><div class="l">Jarak minggu ini</div><div class="n">'+fmtKm(done)+'<small>/ '+fmtKm(plan)+' km</small></div><div class="l">Realisasi dari log latihan vs program</div></div>'+
+  "</div>"+
+  '<div class="grid2"><div class="card"><h3>Minggu ini</h3><div class="week">'+cols+'</div><div class="legend"><span><b style="background:var(--surface2);border:1px solid var(--line)"></b>Program</span><span><b style="background:var(--accent)"></b>Selesai</span></div></div>'+
+  '<div class="card"><h3>Zona heart rate</h3>'+zoneBar()+'<div>'+zoneRows()+"</div></div></div>"+
+  '<div class="card"><h3>Feedback coach terakhir</h3>'+(last?'<div class="meta"><span><b>'+fmtDate(last.date)+"</b> · "+esc(last.type)+" · "+fmtKm(last.km)+' km</span></div><div class="fb">'+esc(last.feedback.length>420?last.feedback.slice(0,420)+"…":last.feedback)+'</div><a href="#coach">Buka Coach AI</a>':'<div class="empty">Catat latihan di menu Coach AI, lalu minta feedback.</div>')+"</div>";
+}};
+
+/* ---------- Profil dan zona ---------- */
+V.profil={t:"Profil & Zona",f:function(){
+  const p=M.profile;
+  return head("Profil & Zona","Data diri dipakai untuk menghitung zona dan jadi konteks coach AI.")+
+  '<div class="grid2"><div class="card"><h3>Data diri</h3>'+
+  '<label>Nama'+inp("profile.name",p.name,{label:"Nama"})+"</label>"+
+  '<div class="row"><label>Umur'+inp("profile.age",p.age,{num:1,label:"Umur"})+"</label><label>Berat badan (kg)"+inp("profile.weight",p.weight,{num:1,step:.1,label:"Berat badan"})+"</label></div>"+
+  '<div class="row"><label>HR istirahat (bpm)'+inp("profile.hrrest",p.hrrest,{num:1,label:"HR istirahat"})+"</label><label>HR max (opsional)"+inp("profile.hrmax",p.hrmax,{num:1,ph:"estimasi "+hrMax().v,label:"HR max"})+"</label></div>"+
+  '<label>Metode zona<select data-bind="profile.method" aria-label="Metode zona"><option value="hrr"'+(p.method==="hrr"?" selected":"")+'>Karvonen (cadangan HR)</option><option value="max"'+(p.method==="max"?" selected":"")+'>Persen HR max</option></select></label>'+
+  '<p class="note" id="hrNote"></p></div>'+
+  '<div class="card"><h3>Zona Anda</h3><div id="zonesBox"></div></div></div>';
+}};
+
+/* ---------- Program mingguan ---------- */
+V.program={t:"Program Lari",f:function(){
+  const rows=M.plan.map((d,i)=>"<tr><td><b>"+DAYS[i]+"</b></td><td>"+sel("plan."+i+".type",d.type,TYPES,"Jenis "+DAYS[i])+"</td><td>"+inp("plan."+i+".km",d.km,{num:1,step:.5,label:"Km "+DAYS[i]})+"</td><td>"+sel("plan."+i+".zone",d.zone,ZOPTS,"Zona "+DAYS[i])+'</td><td class="num note" data-hrfor="'+i+'"></td><td>'+inp("plan."+i+".note",d.note,{label:"Catatan "+DAYS[i]})+"</td></tr>").join("");
+  return head("Program Lari","Template mingguan awal. Ubah jenis, jarak, zona, dan catatan sesuai kebutuhan; perubahan tersimpan otomatis.")+
+  '<div class="card"><div class="scroll"><table><thead><tr><th>Hari</th><th>Jenis</th><th>Km</th><th>Zona</th><th>Target HR</th><th>Catatan</th></tr></thead><tbody>'+rows+"</tbody></table></div>"+
+  '<div class="row"><div><b>Total minggu: <span id="planTotal" class="num"></span> km</b></div>'+
+  '<label>Naikkan / turunkan volume (%)<input id="scalePct" type="number" value="10" step="5"></label><button class="btn ghost" data-action="scale">Terapkan ke semua hari</button></div>'+
+  '<p class="note">Aturan umum: naikkan volume mingguan sekitar 10% atau kurang, dan turunkan sekitar 20-30% pada minggu pemulihan.</p></div>';
+}};
+
+/* ---------- Training block ---------- */
+function blockViz(){
+  const it=M.blocks.items;if(!it.length)return'<div class="empty">Belum ada block. Tambahkan block pertama.</div>';
+  const bi=blockInfo(),mx=Math.max(1,...it.map(x=>Number(x.vol)||0));
+  return'<div class="tl">'+it.map((x,i)=>'<div class="seg'+(i===bi.cur?" now":"")+'" style="flex:'+(Number(x.weeks)||1)+";height:"+(25+75*(Number(x.vol)||0)/mx)+'%"><b>'+esc(x.name)+"</b><span>"+x.weeks+" mgg · "+x.vol+" km</span></div>").join("")+"</div>";
+}
+function blockNote(){
+  const bi=blockInfo(),nr=M.races.filter(r=>r.date>=today()&&r.prio==="A").sort((a,b)=>a.date<b.date?-1:1)[0];
+  let s="Periode: <b>"+fmtDate(bi.start)+"</b> sampai <b>"+fmtDate(bi.end)+"</b> ("+bi.total+" minggu).";
+  if(nr){const d=daysBetween(bi.end,nr.date);s+=" Race A berikutnya, <b>"+esc(nr.name)+"</b> ("+fmtDate(nr.date)+"), "+(d>=0?"jatuh "+d+" hari setelah block berakhir.":"jatuh "+(-d)+" hari sebelum block berakhir. Pertimbangkan memendekkan block.")}
+  else s+=" Tambahkan race berprioritas A di kalender agar block bisa dicocokkan dengan hari lomba.";
+  return s;
+}
+V.block={t:"Training Block",f:function(){
+  const rows=M.blocks.items.map((x,i)=>"<tr><td>"+inp("blocks.items."+i+".name",x.name,{label:"Nama block"})+"</td><td>"+inp("blocks.items."+i+".weeks",x.weeks,{num:1,label:"Minggu"})+"</td><td>"+inp("blocks.items."+i+".vol",x.vol,{num:1,label:"Volume"})+"</td><td>"+inp("blocks.items."+i+".focus",x.focus,{label:"Fokus"})+'</td><td><button class="btn del" data-action="blockdel" data-i="'+i+'" aria-label="Hapus block">Hapus</button></td></tr>').join("");
+  return head("Training Block","Susun fase latihan dari base sampai taper. Tinggi balok menunjukkan target volume mingguan.")+
+  '<div class="card"><div class="row"><label>Tanggal mulai (Senin)'+inp("blocks.start",M.blocks.start,{type:"date",label:"Tanggal mulai"})+"</label></div><div id=\"blockViz\"></div><p class=\"note\" id=\"blockNote\"></p></div>"+
+  '<div class="card"><div class="scroll"><table><thead><tr><th>Block</th><th>Minggu</th><th>Km/minggu</th><th>Fokus</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div><div><button class="btn ghost" data-action="blockadd">Tambah block</button></div></div>';
+}};
+
+function updateDerived(){
+  const z=$("#zonesBox");if(z)z.innerHTML=zoneRows();
+  const hn=$("#hrNote");if(hn){const m=hrMax();hn.textContent=m.est?"HR max "+m.v+" bpm adalah estimasi (208 - 0,7 x umur). Isi HR max hasil tes lapangan untuk zona yang lebih akurat.":"HR max "+m.v+" bpm dari input Anda."}
+  const pt=$("#planTotal");if(pt)pt.textContent=fmtKm(planKm());
+  document.querySelectorAll("[data-hrfor]").forEach(el=>{el.textContent=hrRange(M.plan[Number(el.dataset.hrfor)].zone)});
+  const bv=$("#blockViz");if(bv)bv.innerHTML=blockViz();
+  const bn=$("#blockNote");if(bn)bn.innerHTML=blockNote();
+}
+
+/* ---------- Race ---------- */
+V.race={t:"Jadwal Race",f:function(){
+  const list=M.races.slice().sort((a,b)=>a.date<b.date?-1:1);
+  const rows=list.map(r=>{const d=daysBetween(today(),r.date);
+    return'<tr'+(d<0?' class="dim"':"")+"><td class=\"num\">"+fmtDate(r.date)+"</td><td><b>"+esc(r.name)+"</b></td><td>"+esc(r.dist)+"</td><td class=\"num\">"+esc(r.goal||"-")+'</td><td><span class="chip'+(r.prio==="A"?" a":"")+'">'+esc(r.prio)+'</span></td><td class="num">'+(d<0?"selesai":d===0?"hari ini":d+" hari")+'</td><td><button class="btn del" data-action="racedel" data-id="'+r.id+'" aria-label="Hapus race">Hapus</button></td></tr>'}).join("");
+  return head("Jadwal Race","Prioritas A adalah target utama musim ini, B latihan lomba, C hanya untuk pengalaman.")+
+  '<div class="card"><h3>Tambah race</h3><div class="row"><label>Nama race<input id="rName" placeholder="Contoh: Bandung Half Marathon"></label><label>Tanggal<input id="rDate" type="date"></label></div>'+
+  '<div class="row"><label>Jarak<input id="rDist" list="rDists" placeholder="21,1K"><datalist id="rDists"><option>5K</option><option>10K</option><option>21,1K</option><option>42,2K</option><option>Trail</option></datalist></label><label>Target waktu<input id="rGoal" placeholder="1:55:00"></label><label>Prioritas<select id="rPrio"><option>A</option><option selected>B</option><option>C</option></select></label><button class="btn" data-action="raceadd">Tambah</button></div></div>'+
+  '<div class="card">'+(rows?'<div class="scroll"><table><thead><tr><th>Tanggal</th><th>Race</th><th>Jarak</th><th>Target</th><th>Prioritas</th><th>Hitung mundur</th><th></th></tr></thead><tbody>'+rows+"</tbody></table></div>":'<div class="empty">Belum ada race. Tambahkan race pertama di atas.</div>')+"</div>";
+}};
+
+/* ---------- Strength ---------- */
+V.strength={t:"Strength Training",f:function(){
+  const cards=M.strength.map((s,i)=>{
+    const rows=s.ex.map((x,j)=>"<tr><td>"+inp("strength."+i+".ex."+j+".name",x.name,{label:"Gerakan"})+"</td><td>"+inp("strength."+i+".ex."+j+".sets",x.sets,{num:1,label:"Set"})+"</td><td>"+inp("strength."+i+".ex."+j+".reps",x.reps,{label:"Repetisi"})+"</td><td>"+inp("strength."+i+".ex."+j+".load",x.load,{label:"Beban"})+'</td><td><button class="btn del" data-action="exdel" data-i="'+i+'" data-j="'+j+'" aria-label="Hapus gerakan">Hapus</button></td></tr>').join("");
+    return'<div class="card"><div class="row"><label>Nama sesi'+inp("strength."+i+".title",s.title,{label:"Nama sesi"})+'</label><label>Hari<select data-bind="strength.'+i+'.day" data-num="1" aria-label="Hari sesi">'+DAYS.map((d,k)=>'<option value="'+k+'"'+(k===Number(s.day)?" selected":"")+">"+d+"</option>").join("")+'</select></label><button class="btn del" data-action="sesdel" data-i="'+i+'">Hapus sesi</button></div>'+
+    '<div class="scroll"><table><thead><tr><th>Gerakan</th><th>Set</th><th>Repetisi / durasi</th><th>Beban</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div><div><button class="btn ghost sm" data-action="exadd" data-i="'+i+'">Tambah gerakan</button></div></div>';
+  }).join("");
+  return head("Strength Training","Dua sesi singkat per minggu cukup untuk kebanyakan pelari. Taruh di hari lari mudah, bukan sebelum interval atau long run.")+
+  (cards||'<div class="empty">Belum ada sesi strength.</div>')+'<div><button class="btn" data-action="sesadd">Tambah sesi</button></div>';
+}};
+
+/* ---------- Panduan zona ---------- */
+V.zona={t:"Panduan Zona HR",f:function(){
+  const z=zones(),m=hrMax();
+  const rows=z.map((x,i)=>'<tr><td><span class="zbadge" style="background:var(--z'+(i+1)+');color:#0F1720;display:inline-block;min-width:44px">Z'+(i+1)+"</span></td><td><b>"+ZMETA[i].name+'</b></td><td class="num">'+x.lo+"–"+x.hi+'</td><td class="num">'+ZMETA[i].rpe+"</td><td>"+ZMETA[i].talk+"</td><td>"+ZMETA[i].use+"</td></tr>").join("");
+  return head("Panduan Zona HR","Zona Anda dihitung dari HR max "+m.v+" bpm"+(M.profile.method==="hrr"?" dan HR istirahat "+(Number(M.profile.hrrest)||0)+" bpm (Karvonen).":" (persen HR max)."))+
+  '<div class="card">'+zoneBar()+'<div class="scroll"><table><thead><tr><th>Zona</th><th>Nama</th><th>bpm</th><th>RPE</th><th>Tes bicara</th><th>Fungsi</th></tr></thead><tbody>'+rows+"</tbody></table></div></div>"+
+  '<div class="grid2"><div class="card"><h3>Cara kerja</h3><p>Zona membagi intensitas menjadi lima rentang persen. Metode persen HR max memakai HR max langsung. Metode Karvonen memakai cadangan HR (HR max dikurangi HR istirahat), jadi lebih peka pada kebugaran individu.</p><p>Tanpa HR max hasil tes, dashboard memakai rumus Tanaka: 208 dikurangi 0,7 kali umur. Rumus ini rata-rata populasi, jadi selisih 5-10 bpm pada individu itu wajar.</p></div>'+
+  '<div class="card"><h3>Pembagian intensitas</h3><p>Pola yang umum dipakai adalah sekitar 80% volume mingguan di Z1-Z2 dan sisanya di Z3-Z5. Mayoritas pelari terlalu sering berlari di Z3, sehingga easy run tidak benar-benar mudah dan hari keras kurang segar.</p></div></div>'+
+  '<div class="card"><h3>Hal yang memengaruhi bacaan HR</h3><p>Panas, dehidrasi, kafein, kurang tidur, dan stres menaikkan HR pada pace yang sama. Pada lari panjang HR juga naik perlahan (cardiac drift). Gabungkan HR dengan RPE dan tes bicara, jangan jadikan angka satu-satunya patokan.</p><p>Sensor optik di pergelangan kurang akurat saat interval; chest strap lebih bisa diandalkan. Ukur HR istirahat saat bangun pagi sebelum bangkit dari tempat tidur, rata-rata 3 hari. Tes HR max yang sebenarnya melelahkan; lakukan hanya bila sehat dan sebaiknya setelah konsultasi dengan dokter.</p></div>';
+}};
+
+/* ---------- Coach AI ---------- */
+let sampleFn=null,chat=[],busyFb={};
+const sortedLogs=()=>L.items.slice().sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
+function logLine(l){
+  const pc=paceOf(l.km,l.min),z=zoneOfHr(l.hr);
+  return l.date+" "+l.type+" "+l.km+" km"+(l.min?", "+l.min+" menit":"")+(pc?", pace "+pc+"/km":"")+(l.hr?", HR rata-rata "+l.hr+" ("+zlabel(z)+")":"")+(l.rpe?", RPE "+l.rpe:"")+(l.notes?", catatan: "+l.notes:"");
+}
+function coachContext(){
+  const p=M.profile,bi=blockInfo(),cur=bi.cur>=0?M.blocks.items[bi.cur]:null,nr=nextRace();
+  return"Profil: "+(p.name||"pelari")+", umur "+p.age+", berat "+p.weight+" kg, HR istirahat "+p.hrrest+", HR max "+hrMax().v+" bpm.\n"+
+  "Zona HR (bpm): "+zones().map((x,i)=>"Z"+(i+1)+" "+x.lo+"-"+x.hi).join(", ")+".\n"+
+  "Block: "+(cur?cur.name+" minggu "+bi.wk+" dari "+cur.weeks+", target "+cur.vol+" km/minggu, fokus "+cur.focus:"belum ada block aktif")+".\n"+
+  "Race berikutnya: "+(nr?nr.name+" "+nr.dist+" tanggal "+nr.date+", target "+(nr.goal||"belum ada"):"belum ada")+".\n"+
+  "Program mingguan: "+M.plan.map((d,i)=>DAYS[i]+" "+d.type+" "+d.km+" km "+d.zone).join("; ")+".\n"+
+  "Strength: "+(M.strength.map(s=>DAYS[Number(s.day)]+" "+s.title).join("; ")||"belum ada")+".\n"+
+  "Latihan terbaru:\n"+(sortedLogs().slice(0,6).map(logLine).join("\n")||"belum ada");
+}
+const RULES="Kamu coach lari yang praktis, suportif, dan jujur. Jawab dalam Bahasa Indonesia, teks biasa tanpa markdown dan tanpa tabel. Jangan mendiagnosis medis; bila ada nyeri, pusing, atau nyeri dada, sarankan berhenti latihan dan memeriksakan diri ke tenaga medis.";
+const errCopy=c=>({not_granted:"Izin memakai Claude belum diberikan.",rate_limited:"Terlalu sering. Coba lagi beberapa saat lagi.",session_expired:"Sesi berakhir, masuk lagi lalu ulangi.",refused:"Coach tidak bisa menjawab input ini.",cancelled:""}[c]||"Coach belum bisa menjawab. Coba lagi.");
+async function askFeedback(id){
+  const l=L.items.find(x=>x.id===id);if(!l||!sampleFn||busyFb[id])return;
+  busyFb[id]=true;const el=document.getElementById("fb-"+id),btn=document.querySelector('[data-action="fb"][data-id="'+id+'"]');
+  if(btn)btn.disabled=true;if(el)el.innerHTML='<div class="fb">Coach sedang menilai…</div>';
+  const plan=M.plan[dayIdx(l.date)];
+  const prompt=RULES+' Maksimal 170 kata, dengan tiga bagian berlabel persis: "Penilaian:", "Zona dan intensitas:", "Saran sesi berikutnya:". Bandingkan hasil dengan program hari itu dan konteks block.\n\nKONTEKS\n'+coachContext()+"\n\nLATIHAN YANG DINILAI\n"+logLine(l)+"\nProgram hari itu: "+plan.type+" "+plan.km+" km zona "+plan.zone+(plan.note?" ("+plan.note+")":"");
+  try{
+    const r=await sampleFn(prompt,{cache:false,onText:u=>{const e=document.getElementById("fb-"+id);if(e)e.innerHTML='<div class="fb">'+esc(u.text)+"</div>"}});
+    l.feedback=r.text;save("logs");
+  }catch(e){
+    const e2=document.getElementById("fb-"+id);if(e2)e2.innerHTML=l.feedback?'<div class="fb">'+esc(l.feedback)+"</div>":(e&&e.text?'<div class="fb">'+esc(e.text)+"</div>":"")+'<p class="note">'+esc(errCopy(e&&e.code))+"</p>";
+  }
+  busyFb[id]=false;if(btn)btn.disabled=false;
+}
+async function askChat(){
+  const box=$("#chatIn"),out=$("#chatOut"),q=box&&box.value.trim();if(!q||!sampleFn)return;
+  box.value="";chat.push({role:"user",content:q});
+  out.innerHTML+='<div class="fb"><b>Anda:</b> '+esc(q)+'</div><div class="fb" id="chatLive">Coach sedang menjawab…</div>';
+  const turns=[{role:"user",content:RULES+" Jawab ringkas, maksimal 150 kata.\n\nKONTEKS\n"+coachContext()},...chat.slice(-8)];
+  try{
+    const r=await sampleFn(turns,{cache:false,onText:u=>{const e=document.getElementById("chatLive");if(e)e.textContent=u.text}});
+    chat.push({role:"assistant",content:r.text});
+  }catch(e){const e2=document.getElementById("chatLive");if(e2)e2.textContent=errCopy(e&&e.code);chat.pop()}
+  const e3=document.getElementById("chatLive");if(e3)e3.removeAttribute("id");
+}
+V.coach={t:"Coach AI",f:function(){
+  const logs=sortedLogs().map(l=>{const pc=paceOf(l.km,l.min),z=zoneOfHr(l.hr);
+    return'<div class="log"><div class="row" style="align-items:center"><div><b>'+fmtDate(l.date)+" · "+esc(l.type)+'</b></div><div style="flex:0 0 auto;display:flex;gap:6px">'+(sampleFn?'<button class="btn sm" data-action="fb" data-id="'+l.id+'">'+(l.feedback?"Ulangi feedback":"Minta feedback")+"</button>":"")+'<button class="btn del" data-action="logdel" data-id="'+l.id+'" aria-label="Hapus latihan">Hapus</button></div></div>'+
+    '<div class="meta"><span><b>'+fmtKm(Number(l.km)||0)+"</b> km</span>"+(l.min?"<span><b>"+l.min+"</b> menit</span>":"")+(pc?"<span>pace <b>"+pc+"</b>/km</span>":"")+(l.hr?"<span>HR <b>"+l.hr+"</b> ("+zlabel(z)+")</span>":"")+(l.rpe?"<span>RPE <b>"+l.rpe+"</b></span>":"")+"</div>"+
+    (l.notes?'<p class="note">'+esc(l.notes)+"</p>":"")+'<div id="fb-'+l.id+'">'+(l.feedback?'<div class="fb">'+esc(l.feedback)+"</div>":"")+"</div></div>"}).join("");
+  return head("Coach AI","Catat setiap latihan, lalu minta coach menilai hasilnya terhadap program, zona HR, dan fase block Anda.")+
+  (sampleFn?"":'<div class="card"><p class="note">Coach AI hanya aktif saat halaman dibuka lewat Claude. Pencatatan latihan tetap berjalan.</p></div>')+
+  '<div class="card"><h3>Catat latihan</h3><div class="row"><label>Tanggal<input id="lDate" type="date" value="'+today()+'"></label><label>Jenis<select id="lType">'+TYPES.filter(t=>t!=="Istirahat").map(t=>"<option>"+t+"</option>").join("")+'</select></label><label>Jarak (km)<input id="lKm" type="number" step="0.01" inputmode="decimal"></label><label>Durasi (menit)<input id="lMin" type="number" step="0.1" inputmode="decimal"></label></div>'+
+  '<div class="row"><label>HR rata-rata<input id="lHr" type="number" inputmode="numeric"></label><label>RPE (1-10)<input id="lRpe" type="number" min="1" max="10" inputmode="numeric"></label></div><label>Catatan (rasa kaki, cuaca, nyeri, dll.)<textarea id="lNotes"></textarea></label><div><button class="btn" data-action="logadd">Simpan latihan</button></div></div>'+
+  '<div class="card"><h3>Riwayat latihan</h3>'+(logs||'<div class="empty">Belum ada latihan tercatat.</div>')+"</div>"+
+  (sampleFn?'<div class="card"><h3>Tanya coach</h3><div id="chatOut" style="display:flex;flex-direction:column;gap:8px"></div><label>Pertanyaan<textarea id="chatIn" placeholder="Contoh: Apakah saya perlu mengurangi volume minggu depan?"></textarea></label><div><button class="btn" data-action="chat">Kirim</button></div></div>':"");
+}};
+
+/* ---------- Event ---------- */
+function setPath(o,path,v){const k=path.split(".");let c=o;for(let i=0;i<k.length-1;i++)c=c[k[i]];c[k[k.length-1]]=v}
+document.addEventListener("change",e=>{
+  const t=e.target;if(!t.dataset||!t.dataset.bind)return;
+  let v=t.value;if(t.dataset.num)v=v===""?"":Number(v);
+  setPath(M,t.dataset.bind,v);save("main");updateDerived();
+  if(t.dataset.bind==="profile.name")$("#who").textContent=v||"Program lari pribadi";
+});
+const val=id=>{const e=document.getElementById(id);return e?e.value.trim():""};
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-action]");if(!b)return;
+  const a=b.dataset.action,i=Number(b.dataset.i),j=Number(b.dataset.j),id=b.dataset.id;
+  if(a==="scale"){const f=1+(Number(val("scalePct"))||0)/100;M.plan.forEach(d=>{d.km=Math.round((Number(d.km)||0)*f*2)/2});save("main");render()}
+  else if(a==="blockadd"){M.blocks.items.push({id:uid(),name:"Block baru",weeks:4,vol:30,focus:""});save("main");render()}
+  else if(a==="blockdel"){M.blocks.items.splice(i,1);save("main");render()}
+  else if(a==="raceadd"){const n=val("rName"),d=val("rDate");if(!n||!d){setSync("Isi nama dan tanggal race");return}M.races.push({id:uid(),name:n,date:d,dist:val("rDist")||"-",goal:val("rGoal"),prio:val("rPrio")||"B"});save("main");render()}
+  else if(a==="racedel"){M.races=M.races.filter(r=>r.id!==id);save("main");render()}
+  else if(a==="sesadd"){M.strength.push({id:uid(),day:0,title:"Sesi baru",ex:[]});save("main");render()}
+  else if(a==="sesdel"){M.strength.splice(i,1);save("main");render()}
+  else if(a==="exadd"){M.strength[i].ex.push({id:uid(),name:"Gerakan baru",sets:3,reps:"10",load:"badan"});save("main");render()}
+  else if(a==="exdel"){M.strength[i].ex.splice(j,1);save("main");render()}
+  else if(a==="logadd"){const km=Number(val("lKm")),d=val("lDate");if(!km||!d){setSync("Isi tanggal dan jarak");return}
+    L.items.push({id:uid(),date:d,type:val("lType"),km:km,min:Number(val("lMin"))||"",hr:Number(val("lHr"))||"",rpe:Number(val("lRpe"))||"",notes:val("lNotes"),feedback:""});save("logs");render()}
+  else if(a==="logdel"){L.items=L.items.filter(l=>l.id!==id);save("logs");render()}
+  else if(a==="fb")askFeedback(id);
+  else if(a==="chat")askChat();
+});
+window.addEventListener("hashchange",render);
+
+/* ---------- Mulai ---------- */
+render();
+(async function init(){
+  let db=null;
+  try{if(window.claude&&window.claude.use){db=await window.claude.use("db");sampleFn=await window.claude.use("sample")}}catch(e){}
+  if(sampleFn)render();
+  if(db){S.db=db;listen("main");listen("logs")}
+  else{const m=lsGet("main"),l=lsGet("logs");if(m)M=mergeMain(m);if(l)L=Object.assign({items:[]},l);setSync("Tersimpan di browser ini");render()}
+})();
+})();
+</script>
+
+</body>
+</html>
