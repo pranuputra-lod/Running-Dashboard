@@ -189,7 +189,7 @@ const S={db:null,timers:{},busy:{},dirty:{},loaded:{}};
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem("rd_"+k))}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem("rd_"+k,JSON.stringify(v))}catch(e){}};
 const setSync=t=>{const el=$("#sync");if(el)el.textContent=t};
-const mergeMain=d=>{const b=DEF_MAIN(),r=Object.assign(b,d,{profile:Object.assign(b.profile,d.profile||{})});r.plan.forEach(x=>{if(x.type==="Istirahat")x.type="Rest"});return r};
+const mergeMain=d=>{const b=DEF_MAIN(),r=Object.assign(b,d,{profile:Object.assign(b.profile,d.profile||{})});const T={"Istirahat":"Rest","Bangun volume aerobik":"Build aerobic volume","Tempo dan threshold":"Tempo and threshold","Interval dan simulasi race":"Intervals and race simulation","Volume turun, intensitas dijaga":"Lower volume, keep intensity","20 menit tempo":"20 min tempo","Pace santai, bisa ngobrol":"Easy pace, able to hold a conversation","Kaki dan core":"Legs and core","Stabilitas dan glute":"Stability and glutes","sedang":"moderate","badan":"bodyweight","8 / kaki":"8 / leg","40 dtk":"40 sec","30 dtk / sisi":"30 sec / side","45 dtk / kaki":"45 sec / leg","Block baru":"New block","Sesi baru":"New session","Gerakan baru":"New exercise"},t=v=>typeof v==="string"&&T[v]?T[v]:v;r.plan.forEach(x=>{x.type=t(x.type);x.note=t(x.note)});(r.blocks&&r.blocks.items||[]).forEach(x=>{x.name=t(x.name);x.focus=t(x.focus)});r.strength.forEach(q=>{q.title=t(q.title);(q.ex||[]).forEach(e=>{e.name=t(e.name);e.load=t(e.load);e.reps=t(e.reps)})});return r};
 function save(key){
   if(S.db&&!S.loaded[key]){setSync("Saved data is still loading, try again in a moment");return}
   if(S.db){clearTimeout(S.timers[key]);S.timers[key]=setTimeout(()=>flush(key),600);setSync("Saving…")}
